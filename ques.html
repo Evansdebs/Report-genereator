@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneReal Report Sheet Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Splash Screen Styles */
+        #splashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .app-logo-container {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+            /* REPLACE THIS WITH YOUR SPLASH SCREEN IMAGE URL */
+            background-image: url('');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .app-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .app-tagline {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+
+        /* Main App Styles */
+        #mainApp {
+            display: none;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            line-height: 1.3;
+            position: relative;
+        }
+        .school-logo {
+            height: 80px;
+            margin-bottom: 10px;
+            /* REPLACE THIS WITH YOUR SCHOOL LOGO URL */
+            background-image: url('');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .school-name {
+            font-weight: bold;
+            margin: 5px 0;
+            letter-spacing: 0.5px;
+            font-size: 18px;
+        }
+        .address {
+            margin: 3px 0;
+        }
+        .motto {
+            font-style: italic;
+            margin: 3px 0 8px 0;
+        }
+        .report-title {
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 8px 0 12px 0;
+            font-size: 16px;
+        }
+        .student-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 6px 4px;
+            text-align: center;
+            line-height: 1.3;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            white-space: normal;
+        }
+        .footer {
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+        .signatures {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px;
+        }
+        .signature {
+            text-align: center;
+            width: 200px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        input, select {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #viewReportsBtn {
+            background-color: #3498db;
+        }
+        #viewReportsBtn:hover {
+            background-color: #2980b9;
+        }
+        #reportOutput {
+            display: none;
+            margin-top: 20px;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .subject-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .grading-scheme {
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            padding: 8px;
+            background-color: #f9f9f9;
+        }
+        .grading-scheme table {
+            margin: 0;
+        }
+        .grading-scheme td {
+            padding: 4px 8px;
+        }
+        .logo-url-input {
+            margin: 10px 0;
+        }
+        .logo-url-input input {
+            width: 100%;
+            padding: 6px;
+            font-size: 13px;
+        }
+        #reportsList {
+            display: none;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .report-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .report-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div class="app-logo-container">📚OR📚</div>
+        <div class="app-name">ONEREAL REPORT SHEET GENERATOR</div>
+        <div class="app-tagline">Professional School Report Management</div>
+    </div>
+
+    <!-- Main App Content -->
+    <div id="mainApp">
+        <div class="container">
+            <button id="viewReportsBtn">View/Edit Generated Reports</button>
+            <div id="reportsList">
+                <h3>Generated Reports</h3>
+                <div id="reportsContainer"></div>
+            </div>
+
+            <h1 style="text-align:center;margin-bottom:20px;font-size:18px;">The Living Spring School Report Generator</h1>
+            
+            <div class="form-section">
+                <h3 style="margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px;font-size:16px;">School Information</h3>
+                <div class="logo-url-input">
+                    <label for="schoolLogoUrl">School Logo URL (optional):</label>
+                    <input type="text" id="schoolLogoUrl" placeholder="Paste image URL here">
+                </div>
+                
+                <h3 style="margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px;font-size:16px;">Student Information</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label for="basicLevel">CLASS:</label>
+                        <input type="text" id="basicLevel" placeholder="e.g. 4">
+                    </div>
+                    <div class="form-group">
+                        <label for="term">TERM:</label>
+                        <input type="text" id="term" placeholder="e.g. 1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="studentName">NAME OF LEARNER:</label>
+                    <input type="text" id="studentName" placeholder="Full name">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label for="academicYear">ACADEMIC YEAR:</label>
+                        <input type="text" id="academicYear" placeholder="e.g. 2024/2025">
+                    </div>
+                    <div class="form-group">
+                        <label for="vacationDate">DATE OF VACATION:</label>
+                        <input type="text" id="vacationDate" placeholder="e.g. 19th DEC, 2024">
+                    </div>
+                    <div class="form-group">
+                        <label for="rollNumber">NUMBER ON ROLL:</label>
+                        <input type="text" id="rollNumber" placeholder="e.g. 27">
+                    </div>
+                    <div class="form-group">
+                        <label for="reopeningDate">RE-OPENING DATE:</label>
+                        <input type="text" id="reopeningDate" placeholder="e.g. 13th JAN, 2025">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 style="margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px;font-size:16px;">Subjects & Scores</h3>
+                <p style="margin:8px 0 12px 0;">Enter raw scores (out of 100) - system will calculate 50% automatically</p>
+                
+                <div class="grading-scheme">
+                    <table>
+                        <tr>
+                            <td><strong>MARKS</strong></td>
+                            <td><strong>GRADING</strong></td>
+                            <td><strong>REMARKS</strong></td>
+                        </tr>
+                        <tr>
+                            <td>80 – 100</td>
+                            <td>(A)</td>
+                            <td>ADVANCE</td>
+                        </tr>
+                        <tr>
+                            <td>68 – 79</td>
+                            <td>(P)</td>
+                            <td>PROFICIENCY</td>
+                        </tr>
+                        <tr>
+                            <td>54 – 67</td>
+                            <td>(AP)</td>
+                            <td>APPROACHING PROFICIENCY</td>
+                        </tr>
+                        <tr>
+                            <td>40 – 53</td>
+                            <td>(D)</td>
+                            <td>DEVELOPING</td>
+                        </tr>
+                        <tr>
+                            <td>39 – BELOW</td>
+                            <td>(B)</td>
+                            <td>BEGINNING</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div id="subjectsContainer" style="margin-top:15px;">
+                    <!-- Pre-populated subjects -->
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="ENGLISH" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="MATHEMATICS" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="SCIENCE" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="R.M.E" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="HISTORY" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="CREATIVE ARTS" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="ABACUS" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="I.C.T" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="O.W.O.P" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="FRENCH" readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                    <div class="subject-row">
+                        <input type="text" class="subjectName" value="GHANAIAN LANG." readonly style="background:#f5f5f5;">
+                        <input type="number" class="classScore" placeholder="Class (100%)" min="0" max="100">
+                        <input type="number" class="examScore" placeholder="Exam (100%)" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 style="margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px;font-size:16px;">Additional Information</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label for="attendance">ATTENDANCE:</label>
+                        <input type="number" id="attendance" placeholder="Present" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="totalDays">OUT OF:</label>
+                        <input type="number" id="totalDays" placeholder="Total days" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="promotedTo">PROMOTED TO:</label>
+                        <input type="text" id="promotedTo" placeholder="Next class">
+                    </div>
+                    <div class="form-group">
+                        <label for="repeatedIn">REPEATED IN:</label>
+                        <input type="text" id="repeatedIn" placeholder="If repeated">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="conduct">CONDUCT:</label>
+                    <select id="conduct">
+                        <option value="Satisfactory" selected>Satisfactory</option>
+                        <option value="Excellent">Excellent</option>
+                        <option value="Very Good">Very Good</option>
+                        <option value="Good">Good</option>
+                        <option value="Needs Improvement">Needs Improvement</option>
+                        <option value="Poor">Poor</option>
+                        <option value="">(Custom)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="interest">INTEREST:</label>
+                    <select id="interest">
+                        <option value="Reading and Cadeting" selected>Reading and Cadeting</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Arts">Arts</option>
+                        <option value="Music">Music</option>
+                        <option value="Dancing">Dancing</option>
+                        <option value="">(Custom)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teacherRemarks">CLASS TEACHER'S REMARKS:</label>
+                    <select id="teacherRemarks">
+                        <option value="Can do better" selected>Can do better</option>
+                        <option value="Excellent performance">Excellent performance</option>
+                        <option value="Very good">Very good</option>
+                        <option value="Good effort">Good effort</option>
+                        <option value="Needs improvement">Needs improvement</option>
+                        <option value="">(Custom)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button type="button" id="generateReport">Generate Report</button>
+                <button type="button" id="downloadPdf" disabled>Download PDF</button>
+            </div>
+            
+            <div id="reportOutput">
+                <div class="header">
+                    <div id="schoolLogoContainer"></div>
+                    <div class="school-name">THE LIVING SPRING SCHOOL</div>
+                    <div class="address">P.O.BOX 16493 K.I.A ACCRA (0243438604)</div>
+                    <div class="motto">Motto: Drink deep or taste not the spring of knowledge</div>
+                    <div class="report-title">LEARNER'S REPORT SHEET</div>
+                </div>
+                
+                <div class="student-info">
+                    <div><strong>BASIC:</strong> <span id="rBasic"></span> <strong>TERM</strong> <span id="rTerm"></span></div>
+                    <div></div>
+                    <div><strong>NAME OF LEARNER :</strong> <span id="rStudentName"></span></div>
+                    <div></div>
+                    <div><strong>ACADEMIC YEAR :</strong> <span id="rAcademicYear"></span></div>
+                    <div><strong>DATE OF VACATION :</strong> <span id="rVacationDate"></span></div>
+                    <div><strong>NUMBER ON ROLL :</strong> <span id="rRollNumber"></span></div>
+                    <div><strong>RE-OPENING DATE :</strong> <span id="rReopeningDate"></span></div>
+                </div>
+                
+                <table id="reportTable">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">SUBJECT</th>
+                            <th style="width:15%">CLASS SCORE<br>50%</th>
+                            <th style="width:15%">EXAMS SCORE<br>50%</th>
+                            <th style="width:15%">TOTAL SCORE<br>100%</th>
+                            <th style="width:10%">GRADE</th>
+                            <th style="width:20%">REMARKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Subjects will be added here -->
+                    </tbody>
+                </table>
+                
+                <div class="footer">
+                    <div style="margin-bottom:8px;"><strong>ATTENDANCE :</strong> <span id="rAttendance"></span> OUT OF <span id="rTotalDays"></span></div>
+                    <div style="margin-bottom:8px;"><strong>PROMOTED TO :</strong> <span id="rPromotedTo"></span></div>
+                    <div style="margin-bottom:8px;"><strong>REPEATED IN :</strong> <span id="rRepeatedIn"></span></div>
+                    <div style="margin-bottom:8px;"><strong>CONDUCT :</strong> <span id="rConduct"></span></div>
+                    <div style="margin-bottom:8px;"><strong>INTEREST :</strong> <span id="rInterest"></span></div>
+                    <div style="margin-bottom:8px;"><strong>CLASS TEACHER'S REMARKS :</strong> <span id="rTeacherRemarks"></span></div>
+                </div>
+                
+                <div class="signatures">
+                    <div class="signature">CLASS TEACHER'S SIGNATURE</div>
+                    <div class="signature">ADMINISTRATOR'S SIGNATURE</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+        
+        // Show splash screen first, then main app
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('splashScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                
+                // Initialize your app functionality here
+                initializeApp();
+            }, 2000); // Show splash for 2 seconds
+        });
+        
+        function initializeApp() {
+            // Report storage
+            let generatedReports = JSON.parse(localStorage.getItem('reports')) || [];
+            let currentEditingIndex = -1;
+            
+            // View Reports button
+            document.getElementById('viewReportsBtn').addEventListener('click', function() {
+                const reportsList = document.getElementById('reportsList');
+                const reportsContainer = document.getElementById('reportsContainer');
+                
+                if (reportsList.style.display === 'block') {
+                    reportsList.style.display = 'none';
+                    return;
+                }
+                
+                reportsContainer.innerHTML = '';
+                
+                if (generatedReports.length === 0) {
+                    reportsContainer.innerHTML = '<p>No reports generated yet</p>';
+                } else {
+                    generatedReports.forEach((report, index) => {
+                        const reportItem = document.createElement('div');
+                        reportItem.className = 'report-item';
+                        reportItem.innerHTML = `
+                            <span>${report.studentName} - ${report.classLevel} (Term ${report.term})</span>
+                            <div>
+                                <button onclick="viewReport(${index})">View</button>
+                                <button onclick="editReport(${index})">Edit</button>
+                            </div>
+                        `;
+                        reportsContainer.appendChild(reportItem);
+                    });
+                }
+                
+                reportsList.style.display = 'block';
+            });
+            
+            // Function to load report data into form for editing
+            window.editReport = function(index) {
+                if (index >= 0 && index < generatedReports.length) {
+                    const report = generatedReports[index];
+                    currentEditingIndex = index;
+                    
+                    // Load data into form
+                    document.getElementById('basicLevel').value = report.classLevel;
+                    document.getElementById('term').value = report.term;
+                    document.getElementById('studentName').value = report.studentName;
+                    document.getElementById('academicYear').value = report.academicYear;
+                    document.getElementById('vacationDate').value = report.vacationDate;
+                    document.getElementById('rollNumber').value = report.rollNumber;
+                    document.getElementById('reopeningDate').value = report.reopeningDate;
+                    document.getElementById('schoolLogoUrl').value = report.logoUrl || '';
+                    document.getElementById('attendance').value = report.attendance;
+                    document.getElementById('totalDays').value = report.totalDays;
+                    document.getElementById('promotedTo').value = report.promotedTo;
+                    document.getElementById('repeatedIn').value = report.repeatedIn;
+                    document.getElementById('conduct').value = report.conduct;
+                    document.getElementById('interest').value = report.interest;
+                    document.getElementById('teacherRemarks').value = report.teacherRemarks;
+                    
+                    // Load subject scores
+                    const subjectRows = document.querySelectorAll('.subject-row');
+                    report.subjects.forEach((subject, i) => {
+                        if (i < subjectRows.length) {
+                            subjectRows[i].querySelector('.classScore').value = subject.classScore * 2; // Convert back to 100%
+                            subjectRows[i].querySelector('.examScore').value = subject.examScore * 2; // Convert back to 100%
+                        }
+                    });
+                    
+                    // Hide reports list
+                    document.getElementById('reportsList').style.display = 'none';
+                    
+                    // Scroll to form
+                    document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+            
+            // Function to view saved reports
+            window.viewReport = function(index) {
+                const reports = JSON.parse(localStorage.getItem('reports')) || [];
+                if (index >= 0 && index < reports.length) {
+                    const report = reports[index];
+                    const reportOutput = document.getElementById('reportOutput');
+                    reportOutput.innerHTML = report.html;
+                    reportOutput.style.display = 'block';
+                    document.getElementById('reportsList').style.display = 'none';
+                    document.getElementById('downloadPdf').disabled = false;
+                    
+                    // Scroll to the report
+                    reportOutput.scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+            
+            // Generate report
+            document.getElementById('generateReport').addEventListener('click', function() {
+                // Validate inputs
+                if (!validateInputs()) {
+                    return;
+                }
+                
+                // Add school logo if URL provided
+                const logoUrl = document.getElementById('schoolLogoUrl').value;
+                const logoContainer = document.getElementById('schoolLogoContainer');
+                logoContainer.innerHTML = '';
+                
+                if (logoUrl) {
+                    const logoImg = document.createElement('img');
+                    logoImg.src = logoUrl;
+                    logoImg.className = 'school-logo';
+                    logoImg.onerror = function() {
+                        logoContainer.innerHTML = '<p style="color:red;font-size:12px;">[Logo failed to load]</p>';
+                    };
+                    logoContainer.appendChild(logoImg);
+                }
+                
+                // Get form data
+                const reportData = {
+                    studentName: document.getElementById('studentName').value,
+                    classLevel: document.getElementById('basicLevel').value,
+                    term: document.getElementById('term').value,
+                    academicYear: document.getElementById('academicYear').value,
+                    vacationDate: document.getElementById('vacationDate').value,
+                    rollNumber: document.getElementById('rollNumber').value,
+                    reopeningDate: document.getElementById('reopeningDate').value,
+                    logoUrl: logoUrl,
+                    attendance: document.getElementById('attendance').value,
+                    totalDays: document.getElementById('totalDays').value,
+                    promotedTo: document.getElementById('promotedTo').value,
+                    repeatedIn: document.getElementById('repeatedIn').value,
+                    conduct: document.getElementById('conduct').value,
+                    interest: document.getElementById('interest').value,
+                    teacherRemarks: document.getElementById('teacherRemarks').value,
+                    date: new Date().toLocaleString(),
+                    subjects: []
+                };
+                
+                // Process subjects
+                const subjectRows = document.querySelectorAll('.subject-row');
+                const reportTable = document.querySelector('#reportTable tbody');
+                reportTable.innerHTML = '';
+                
+                subjectRows.forEach(row => {
+                    const name = row.querySelector('.subjectName').value;
+                    const classScore = parseFloat(row.querySelector('.classScore').value) || 0;
+                    const examScore = parseFloat(row.querySelector('.examScore').value) || 0;
+                    
+                    // Store original scores (converted to 50% for storage)
+                    reportData.subjects.push({
+                        name: name,
+                        classScore: classScore * 0.5,
+                        examScore: examScore * 0.5
+                    });
+                    
+                    // Calculate 50% of each score for display
+                    const classScore50 = (classScore * 0.5).toFixed(1);
+                    const examScore50 = (examScore * 0.5).toFixed(1);
+                    const totalScore = (parseFloat(classScore50) + parseFloat(examScore50)).toFixed(1);
+                    
+                    // Determine grade and remarks
+                    let grade, remarks;
+                    const numericScore = parseFloat(totalScore);
+                    
+                    if (numericScore >= 80) {
+                        grade = 'A';
+                        remarks = 'ADVANCE';
+                    } else if (numericScore >= 68) {
+                        grade = 'P';
+                        remarks = 'PROFICIENCY';
+                    } else if (numericScore >= 54) {
+                        grade = 'AP';
+                        remarks = 'APPROACHING PROFICIENCY';
+                    } else if (numericScore >= 40) {
+                        grade = 'D';
+                        remarks = 'DEVELOPING';
+                    } else {
+                        grade = 'B';
+                        remarks = 'BEGINNING';
+                    }
+                    
+                    // Add row to table
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${name}</td>
+                        <td>${classScore50}</td>
+                        <td>${examScore50}</td>
+                        <td>${totalScore}</td>
+                        <td>${grade}</td>
+                        <td>${remarks}</td>
+                    `;
+                    reportTable.appendChild(tr);
+                });
+                
+                // Update report output with current data
+                document.getElementById('rBasic').textContent = reportData.classLevel;
+                document.getElementById('rTerm').textContent = reportData.term;
+                document.getElementById('rStudentName').textContent = reportData.studentName;
+                document.getElementById('rAcademicYear').textContent = reportData.academicYear;
+                document.getElementById('rVacationDate').textContent = reportData.vacationDate;
+                document.getElementById('rRollNumber').textContent = reportData.rollNumber;
+                document.getElementById('rReopeningDate').textContent = reportData.reopeningDate;
+                document.getElementById('rAttendance').textContent = reportData.attendance;
+                document.getElementById('rTotalDays').textContent = reportData.totalDays;
+                document.getElementById('rPromotedTo').textContent = reportData.promotedTo;
+                document.getElementById('rRepeatedIn').textContent = reportData.repeatedIn;
+                document.getElementById('rConduct').textContent = reportData.conduct;
+                document.getElementById('rInterest').textContent = reportData.interest;
+                document.getElementById('rTeacherRemarks').textContent = reportData.teacherRemarks;
+                
+                // Show report
+                document.getElementById('reportOutput').style.display = 'block';
+                document.getElementById('downloadPdf').disabled = false;
+                
+                // Store HTML for later viewing
+                reportData.html = document.getElementById('reportOutput').innerHTML;
+                
+                // Update or add report
+                if (currentEditingIndex >= 0) {
+                    generatedReports[currentEditingIndex] = reportData;
+                    currentEditingIndex = -1;
+                } else {
+                    generatedReports.unshift(reportData);
+                }
+                
+                localStorage.setItem('reports', JSON.stringify(generatedReports));
+            });
+            
+            // Download PDF
+            document.getElementById('downloadPdf').addEventListener('click', function() {
+                const element = document.getElementById('reportOutput');
+                
+                html2canvas(element, {
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    letterRendering: true,
+                    allowTaint: true
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 210;
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                    
+                    const studentName = document.getElementById('studentName').value || 'report';
+                    pdf.save(`${studentName}_report_sheet.pdf`);
+                });
+            });
+            
+            // Input validation
+            function validateInputs() {
+                const requiredFields = [
+                    'basicLevel', 'term', 'studentName', 'academicYear',
+                    'vacationDate', 'rollNumber', 'reopeningDate',
+                    'attendance', 'totalDays'
+                ];
+                
+                for (const fieldId of requiredFields) {
+                    const field = document.getElementById(fieldId);
+                    if (!field.value) {
+                        alert(`Please fill in all required fields`);
+                        field.focus();
+                        return false;
+                    }
+                }
+                
+                // Validate subject scores
+                const subjectRows = document.querySelectorAll('.subject-row');
+                for (const row of subjectRows) {
+                    const classScore = row.querySelector('.classScore').value;
+                    const examScore = row.querySelector('.examScore').value;
+                    
+                    if ((classScore && !examScore) || (!classScore && examScore)) {
+                        const subject = row.querySelector('.subjectName').value;
+                        alert(`Please enter both class and exam scores for ${subject}`);
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+        }
+    </script>
+</body>
+</html>
